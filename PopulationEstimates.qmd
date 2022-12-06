@@ -1,0 +1,38 @@
+```{r}
+library(tidyverse)
+library(readxl)
+library(openxlsx)
+library(janitor)
+```
+
+
+```{r}
+UNProjections <- read_excel(path="WPP2022_POP_F01_1_POPULATION_SINGLE_AGE_BOTH_SEXES.xlsx", sheet="Estimates",
+range = cell_rows(17:20541)) |>
+janitor::clean_names()
+
+
+```
+
+```{r}
+UNProj_ZWE_MWI_ZMB <- UNProjections |>
+select(region_subregion_country_or_area,year,x0:x100) |>
+filter(region_subregion_country_or_area %in% c("Zimbabwe","Malawi","Zambia")) |>
+filter(year=="2021")
+
+
+```
+
+```{r}
+UNProj_ZWE_MWI_ZMB |>
+mutate(across(x0:x100,~1000*as.numeric(.x))) |>
+rowwise()|>
+mutate("Below 5 (0-4)" = sum(across(x0:x4))) |>
+mutate("Total Population" = sum(across(x0:x100))) |>
+ungroup()|>
+rename(Country = region_subregion_country_or_area,
+EstimateYear = year)|>
+rename_with(function(x){gsub("x","Age ",x)}) |>
+write.xlsx(file = "WPP_POP_ZWE_ZMB_MWI.xlsx")
+
+```
